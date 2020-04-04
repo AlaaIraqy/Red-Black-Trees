@@ -7,6 +7,11 @@ public:
     string val;
     Node* left, * right, * parent;
     bool black;
+    Node()
+    {
+        left = right = parent = NULL;
+        black = false;
+    }
 
     Node(string x) {
         val = x;
@@ -57,6 +62,14 @@ public:
         if (node->parent->left == node)
             return true;
         return false;
+    }
+    Node* ChangeColor(Node* node)
+    {
+        if (node->black)
+            node->black = false;
+        else
+            node->black = true;
+
     }
 };
 class RBTree {
@@ -120,6 +133,39 @@ public:
         node->parent = child;
 
         return root;
+
+
+
+
+
+    }
+
+    Node* check(Node* node, Node* root)
+    {
+        if (node->parent == NULL)
+        {
+            node = root;
+            node->black=true; }
+
+        if (node->parent->black)
+            return;
+        if (!(node->parent->black))
+        {
+            if (!(node->uncle(node)->black))
+            {
+                Node n ;
+                node->parent = n.ChangeColor(node->parent);
+             
+                node->uncle(node)= n.ChangeColor(node->uncle(node));
+
+                
+                
+            }
+        }
+
+
+
+
 
 
 
