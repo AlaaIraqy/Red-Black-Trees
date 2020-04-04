@@ -1,33 +1,38 @@
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 using namespace std;
+enum Color
+{Red , Black};
+
 class Node {
 public:
+
     string val;
     Node* left, * right, * parent;
-    bool black;
+    bool Color;
     Node()
     {
         left = right = parent = NULL;
-        black = false;
+        Color=Red;
     }
 
     Node(string x) {
         val = x;
         left = right = parent = NULL;
-        black = false;
+        Color = Red;
     }
     /*bool isOnLeft() {
         return this == parent->left;
     }*/
-    Node* grandparent() {
-        if (parent == NULL)
+    Node* grandparent(Node*node) {
+        if (node->parent == NULL)
             return NULL;
-        if (parent->parent == NULL)
+        if (node->parent->parent == NULL)
             return NULL;
 
-        return parent->parent;
+        return node->parent->parent;
 }
 
    /* Node* sibling() {
@@ -40,11 +45,11 @@ public:
     }*/
     Node* uncle(Node*node) {
 
-        if ( parent->parent == NULL)
+        if (node-> parent->parent == NULL)
             return NULL;
-        if (node->parent == node->grandparent()->right)
-            return node->grandparent()->left;
-        return node->grandparent()->right;
+        if (node->parent == node->grandparent(node)->right)
+            return node->grandparent(node)->left;
+        return node->grandparent(node)->right;
     }
 
     Node* createNode( string data)
@@ -63,18 +68,28 @@ public:
             return true;
         return false;
     }
+  /*  Node* ChangeColor(Node* node)
+    {
+        if (node->Color==Red)
+            node->Color=Black;
+        else
+            node->Color = Red;
+
+    }*/
+};
+
+   
+
     Node* ChangeColor(Node* node)
     {
-        if (node->black)
-            node->black = false;
+        if (node->Color == Red)
+            node->Color = Black;
         else
-            node->black = true;
+            node->Color = Red;
+        return node;
 
     }
-};
-class RBTree {
-    
-public:
+
     bool isLeft(Node* node) {
         if (node->parent->left == node)
             return true;
@@ -142,118 +157,152 @@ public:
 
     Node* check(Node* node, Node* root)
     {
-        Node* uncle;
-        if (node->parent->parent->left == node->parent)
-            uncle = node->parent->parent->right;
-        else if (node->parent->parent->right == node->parent)
-        {
-            uncle = node->parent->parent->left;
-        }
-        Node* grandparent;
-        if (node->parent->parent == NULL)
-            grandparent = NULL;
-        else 
-        {
-            grandparent = node->parent->parent;
-        }
-        
         if (node->parent == NULL)
         {
-            node = root;
-            node->black=true; }
-
-        if (node->parent->black)
-            return;
-        if (!(node->parent->black))
+            node->Color = Black;
+            return root; 
+        }
+        else
         {
-            if (!(uncle->black))
+            if (node->parent->Color == Black)
+                return root;
+            else
             {
-                Node n ;
-                node->parent = n.ChangeColor(node->parent);
-
-                uncle = n.ChangeColor(uncle);
-
-                check(grandparent, root);
-                
-                
-                
-            }
-
-            else if (uncle->black)
-            {
-                if (grandparent->left->left == node)
+                Node* uncle;
+                if (node->parent->parent->left == node->parent)
+                    uncle = node->parent->parent->right;
+                else 
                 {
-                    rightRotate(grandparent, root);
-                    Node x;
-                    node->parent = x.ChangeColor(node->parent);
+                    uncle = node->parent->parent->left;
+                }
 
-                    grandparent = x.ChangeColor(grandparent);
+                Node* grandparent = node->parent->parent;
+                
+                if (uncle==NULL||uncle->Color==Black)
+                
+                {
+                    
+                    
+                    
+                    
+                        
+                   
+
+                    if (isLeft(node)&&isLeft(node->parent))
+                    {
+                        root =rightRotate(grandparent, root);
+                       node->parent= ChangeColor(node->parent);
+                        grandparent= ChangeColor(grandparent);
+                        return root;
+                    }
+                    if (!isLeft(node) && isLeft(node->parent))
+                    {
+                        root=leftRotate(node->parent, root);
+                        root=rightRotate(grandparent, root);
+                      node->parent=  ChangeColor(node->parent);
+                       grandparent= ChangeColor(grandparent);
+                        return root;
+                    }
+                    if (!isLeft(node) && !isLeft(node->parent))
+                    {
+
+                       root= leftRotate(grandparent, root);
+                       node->parent= ChangeColor(node->parent);
+                       grandparent= ChangeColor(grandparent);
+                        return root;
+
+                    }
+                    if (isLeft(node) && !isLeft(node->parent))
+                    {
+                       root= rightRotate(node->parent, root);
+                         root= leftRotate(grandparent, root);
+                           node->parent= ChangeColor(node->parent);
+                           grandparent= ChangeColor(grandparent);
+                            return root;
+                    }
+             }
+                else
+                {
+                   node->parent= ChangeColor(node->parent);
+                   uncle= ChangeColor(uncle);
+                   if (grandparent->parent != NULL)
+                   {
+                       return check(ChangeColor(grandparent), root);
+
+                   }
+                   return root;
+
+                }
+
+                
+               
+
+
+
 
                     
-
-                }
-
-                else if (grandparent->right->right == node)
-                {
-                    leftRotate(grandparent, root);
-                    Node h;
-                    node->parent = h.ChangeColor(node->parent);
-
-                    grandparent = h.ChangeColor(grandparent);
+          
                     
-                }
-                else if (grandparent->left->right==node )
-                {
-                    leftRotate(node->parent, root);
-                    rightRotate(grandparent, root);
-                    Node m;
-                    node->parent = m.ChangeColor(node->parent);
-
-                    grandparent = m.ChangeColor(grandparent);
-                
-                }
-                else if (grandparent->right->left == node)
-                {
-                    rightRotate(node->parent, root);
-                    leftRotate(grandparent, root);
-                    Node f;
-                    node->parent = f.ChangeColor(node->parent);
-
-                    grandparent = f.ChangeColor(grandparent);
-                }
-
-
-
-
 
             }
 
         }
-
-
-
-
-
-
 
 
 
     }
 
+    Node* BSTInsert(Node* root, Node* node)
+    {
+       
+        if (root == NULL)
+            return node;
 
-};
+        if (node->val < root->val)
+        {
+            root->left = BSTInsert(root->left, node);
+            root->left->parent = root;
+        }
+        else if (node->val > root->val)
+        {
+            root->right = BSTInsert(root->right, node);
+            root->right->parent = root;
+        }
+
+       
+        return root;
+    }
+    Node* insert(Node*root,string data)
+    {
+        Node* node = new Node(data);
+        //Node* root=NULL;
+
+        
+        root = BSTInsert(root, node);
+
+         
+       return check(root, node);
+       
+    }
+
+
+
+                
+
+
+
 int main()
 {
-    Node* root=new Node("h");
+   /* Node* root=new Node("h");
     Node* right1 = new Node("d");
     Node* right2 = new Node("c");
     root->right = right1;
     right1->right = right2;
     Node* tree = root;
     cout << tree->val << endl;
-    RBTree Rb;
-    tree = Rb.leftRotate(root, tree);
-    cout << tree->left->val << endl;
+    
+    leftRotate(root, tree);
+    cout << tree->left->val << endl;*/
     
    /* Node* x("alaa");
     Node* y("moh");
@@ -266,6 +315,22 @@ int main()
     x.parent = &y;
     m.right = &a;
     //x.left = &z;*/
+    Node* root=NULL;
+    root = insert(root, "h");
+    root = insert(root, "d");
+    root = insert(root, "c");
+    root = insert(root, "a");
+
+
+
+        
+     //   insert("abdo");
+
+
+    
+    //insert("zaghloul");
+    cout << root->right->val << endl;
+    
    
 
 
