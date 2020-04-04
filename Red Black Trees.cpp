@@ -142,6 +142,21 @@ public:
 
     Node* check(Node* node, Node* root)
     {
+        Node* uncle;
+        if (node->parent->parent->left == node->parent)
+            uncle = node->parent->parent->right;
+        else if (node->parent->parent->right == node->parent)
+        {
+            uncle = node->parent->parent->left;
+        }
+        Node* grandparent;
+        if (node->parent->parent == NULL)
+            grandparent = NULL;
+        else 
+        {
+            grandparent = node->parent->parent;
+        }
+        
         if (node->parent == NULL)
         {
             node = root;
@@ -151,16 +166,67 @@ public:
             return;
         if (!(node->parent->black))
         {
-            if (!(node->uncle(node)->black))
+            if (!(uncle->black))
             {
                 Node n ;
                 node->parent = n.ChangeColor(node->parent);
-             
-                node->uncle(node)= n.ChangeColor(node->uncle(node));
 
+                uncle = n.ChangeColor(uncle);
+
+                check(grandparent, root);
+                
                 
                 
             }
+
+            else if (uncle->black)
+            {
+                if (grandparent->left->left == node)
+                {
+                    rightRotate(grandparent, root);
+                    Node x;
+                    node->parent = x.ChangeColor(node->parent);
+
+                    grandparent = x.ChangeColor(grandparent);
+                    
+
+                }
+
+                else if (grandparent->right->right == node)
+                {
+                    leftRotate(grandparent, root);
+                    Node h;
+                    node->parent = h.ChangeColor(node->parent);
+
+                    grandparent = h.ChangeColor(grandparent);
+                    
+                }
+                else if (grandparent->left->right==node )
+                {
+                    leftRotate(node->parent, root);
+                    rightRotate(grandparent, root);
+                    Node m;
+                    node->parent = m.ChangeColor(node->parent);
+
+                    grandparent = m.ChangeColor(grandparent);
+                
+                }
+                else if (grandparent->right->left == node)
+                {
+                    rightRotate(node->parent, root);
+                    leftRotate(grandparent, root);
+                    Node f;
+                    node->parent = f.ChangeColor(node->parent);
+
+                    grandparent = f.ChangeColor(grandparent);
+                }
+
+
+
+
+
+            }
+
         }
 
 
