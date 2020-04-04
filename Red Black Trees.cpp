@@ -188,6 +188,7 @@ public:
                     node->parent = x.ChangeColor(node->parent);
 
                     grandparent = x.ChangeColor(grandparent);
+
                     
 
                 }
