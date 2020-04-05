@@ -281,8 +281,26 @@ public:
         root = BSTInsert(root, node);
 
          
-       return check(root, node);
+       return check (node,root);
        
+    }
+
+    int MAX(int x, int y)
+    {
+        if (x >= y)
+            return x;
+        else
+            return y;
+    }
+    int height(Node* root)
+    {
+        return (root == NULL) ? -1 :
+            1 + MAX(height(root->left), height(root->right));
+    }
+    int size(Node* root)
+    {
+        return (root == NULL) ? 0 :
+            1 + size(root->left) + size(root->right);
     }
 
 
@@ -318,8 +336,13 @@ int main()
     Node* root=NULL;
     root = insert(root, "h");
     root = insert(root, "d");
-    root = insert(root, "c");
-    root = insert(root, "a");
+    root = insert(root, "b");
+    //root = insert(root, "a");
+  //  root = insert(root, "m");
+    int x = size(root);
+    int y = height(root);
+    cout << x << endl;
+    cout << y << endl;
 
 
 
