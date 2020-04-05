@@ -1,369 +1,240 @@
-#include <iostream>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <iostream> 
+#include <string>
+#include <fstream>
 using namespace std;
-enum Color
-{Red , Black};
+
+enum COLOR { RED, BLACK };
 
 class Node {
 public:
+	string val;
+	COLOR color;
+	Node* left, * right, * parent;
 
-    string val;
-    Node* left, * right, * parent;
-    bool Color;
-    Node()
-    {
-        left = right = parent = NULL;
-        Color=Red;
-    }
+	Node(string val) : val(val) {
+		parent = left = right = NULL;
+		color = RED;
+	}
+ 
+	Node* uncle() {
+		if (parent == NULL or parent->parent == NULL)
+			return NULL;
 
-    Node(string x) {
-        val = x;
-        left = right = parent = NULL;
-        Color = Red;
-    }
-    /*bool isOnLeft() {
-        return this == parent->left;
-    }*/
-    Node* grandparent(Node*node) {
-        if (node->parent == NULL)
-            return NULL;
-        if (node->parent->parent == NULL)
-            return NULL;
+		if (parent->isOnLeft())		
+			return parent->parent->right;
+		else
+			return parent->parent->left;
+	}
 
-        return node->parent->parent;
-}
+	bool isOnLeft() {
+		return this == parent->left; 
+	}
 
-   /* Node* sibling() {
-        if (parent == NULL)
-            return NULL;
-        if (isLeft())
-            return parent->right;
-        if (!isLeft(Node))
-            return parent->left;
-    }*/
-    Node* uncle(Node*node) {
+	Node* sibling() {
+	
+		if (parent == NULL)
+			return NULL;
 
-        if (node-> parent->parent == NULL)
-            return NULL;
-        if (node->parent == node->grandparent(node)->right)
-            return node->grandparent(node)->left;
-        return node->grandparent(node)->right;
-    }
+		if (isOnLeft())
+			return parent->right;
 
-    Node* createNode( string data)
-    {
-        Node* p = (Node*)malloc(sizeof(Node));
-        p->val = data;
-        p->right = NULL;
-        p->left = NULL;
+		return parent->left;
+	}
 
+	void moveDown(Node* nParent) {
+		if (parent != NULL) {
+			if (isOnLeft()) {
+				parent->left = nParent;
+			}
+			else {
+				parent->right = nParent;
+			}
+		}
+		nParent->parent = parent;
+		parent = nParent;
+	}
 
-        return p;
-    }
-
-    bool isLeft(Node* node) {
-        if (node->parent->left == node)
-            return true;
-        return false;
-    }
-  /*  Node* ChangeColor(Node* node)
-    {
-        if (node->Color==Red)
-            node->Color=Black;
-        else
-            node->Color = Red;
-
-    }*/
+	bool hasRedChild() {
+		return (left != NULL and left->color == RED) or
+			(right != NULL and right->color == RED);
+	}
 };
 
-   
+class RBTree {
+public:
+	Node* root;
 
-    Node* ChangeColor(Node* node)
-    {
-        if (node->Color == Red)
-            node->Color = Black;
-        else
-            node->Color = Red;
-        return node;
+	void leftRotate(Node* x) {
+		
+		Node* nParent = x->right;
+		if (x == root)
+			root = nParent;
+		x->moveDown(nParent);
+		x->right = nParent->left;
+		if (nParent->left != NULL)
+		nParent->left->parent = x;
+		nParent->left = x;
+	}
 
-    }
+	void rightRotate(Node* x) {
+		Node* nParent = x->left;
+		if (x == root)
+			root = nParent;
+		x->moveDown(nParent);
+		x->left = nParent->right;
+		if (nParent->right != NULL)
+			nParent->right->parent = x;
+		nParent->right = x;
+	}
 
-    bool isLeft(Node* node) {
-        if (node->parent->left == node)
-            return true;
-        return false;
-    }
-   
+	void swapColors(Node* x1, Node* x2) {
+		COLOR temp;
+		temp = x1->color;
+		x1->color = x2->color;
+		x2->color = temp;
+	}
 
-    
-    Node* rightRotate(Node* node, Node* root)
-    {
-        
-        if (node->left == NULL)
-            return root;
-        Node*child = node->left;
-        node->left = child->right;
-        child->parent = node->parent;
-        if (child->right != NULL)
-            child->right->parent = node;
-        child->right = node;
-        if (node->parent == NULL)
-        {
-            root = child;
-        }
-        else if (isLeft(node))
-        {
-            node->parent->right = child;
-        }
-        else node->parent->left = child;
+	void swapValues(Node* u, Node* v) {
+		string temp;
+		temp = u->val;
+		u->val = v->val;
+		v->val = temp;
+	}
 
-        node->parent = child;
-        
-        return root;
-    }
+	void fixRedRed(Node* x) {
+		if (x == root) {
+			x->color = BLACK;
+			return;
+		}
 
-    Node* leftRotate(Node* node, Node* root)
-    {
+		Node* parent = x->parent, * grandparent = parent->parent,
+			* uncle = x->uncle();
 
-        if (node->right == NULL)
-            return root;
-        Node* child = node->right;
-        node->right = child->left;
-        child->parent = node->parent;
-        if (child->left != NULL)
-            child->left->parent = node;
-        child->left = node;
-        if (node->parent == NULL)
-        {
-            root = child;
-        }
-        else if (isLeft(node))
-        {
-            node->parent->left = child;
-        }
-        else node->parent->right = child;
+		if (parent->color != BLACK) {
+			if (uncle != NULL && uncle->color == RED) {
+				parent->color = BLACK;
+				uncle->color = BLACK;
+				grandparent->color = RED;
+				fixRedRed(grandparent);
+			}
+			else {
+				if (parent->isOnLeft()) {
+					if (x->isOnLeft()) {
+						swapColors(parent, grandparent);
+					}
+					else {
+						leftRotate(parent);
+						swapColors(x, grandparent);
+					}
+					rightRotate(grandparent);
+				}
+				else {
+					if (x->isOnLeft()){
+						rightRotate(parent);
+						swapColors(x, grandparent);
+					}
+					else {
+						swapColors(parent, grandparent);
+					}
 
-        node->parent = child;
-
-        return root;
-
-
-
-
-
-    }
-
-    Node* check(Node* node, Node* root)
-    {
-        if (node->parent == NULL)
-        {
-            node->Color = Black;
-            return root; 
-        }
-        else
-        {
-            if (node->parent->Color == Black)
-                return root;
-            else
-            {
-                Node* uncle;
-                if (node->parent->parent->left == node->parent)
-                    uncle = node->parent->parent->right;
-                else 
-                {
-                    uncle = node->parent->parent->left;
-                }
-
-                Node* grandparent = node->parent->parent;
-                
-                if (uncle==NULL||uncle->Color==Black)
-                
-                {
-                    
-                    
-                    
-                    
-                        
-                   
-
-                    if (isLeft(node)&&isLeft(node->parent))
-                    {
-                        root =rightRotate(grandparent, root);
-                       node->parent= ChangeColor(node->parent);
-                        grandparent= ChangeColor(grandparent);
-                        return root;
-                    }
-                    if (!isLeft(node) && isLeft(node->parent))
-                    {
-                        root=leftRotate(node->parent, root);
-                        root=rightRotate(grandparent, root);
-                      node->parent=  ChangeColor(node->parent);
-                       grandparent= ChangeColor(grandparent);
-                        return root;
-                    }
-                    if (!isLeft(node) && !isLeft(node->parent))
-                    {
-
-                       root= leftRotate(grandparent, root);
-                       node->parent= ChangeColor(node->parent);
-                       grandparent= ChangeColor(grandparent);
-                        return root;
-
-                    }
-                    if (isLeft(node) && !isLeft(node->parent))
-                    {
-                       root= rightRotate(node->parent, root);
-                         root= leftRotate(grandparent, root);
-                           node->parent= ChangeColor(node->parent);
-                           grandparent= ChangeColor(grandparent);
-                            return root;
-                    }
-             }
-                else
-                {
-                   node->parent= ChangeColor(node->parent);
-                   uncle= ChangeColor(uncle);
-                   if (grandparent->parent != NULL)
-                   {
-                       return check(ChangeColor(grandparent), root);
-
-                   }
-                   return root;
-
-                }
-
-                
-               
+					leftRotate(grandparent);
+				}
+			}
+		}
+	}
 
 
+	RBTree() { 
+		root = NULL;
+	}
 
+	Node* getRoot() {
+		return root; 
+	}
 
-                    
-          
-                    
+	Node* search(string val) {
+		Node* temp = root;
+		while (temp != NULL) {
+			if (val < temp->val) {
+				if (temp->left == NULL)
+					break;
+				else
+					temp = temp->left;
+			}
+			else if (val == temp->val) {
+				break;
+			}
+			else {
+				if (temp->right == NULL)
+					break;
+				else
+					temp = temp->right;
+			}
+		}
 
-            }
+		return temp;
+	}
 
-        }
+	void insert(string val) {
+		Node* newNode = new Node(val);
+		if (root == NULL) {
+			newNode->color = BLACK;
+			root = newNode;
+		}
+		else {
+			Node* temp = search(val);
 
+			if (temp->val == val) {
+				cout << "word exists"<<endl;
+				return;
+			}
+			newNode->parent = temp;
 
+			if (val < temp->val)
+				temp->left = newNode;
+			else
+				temp->right = newNode;
+			fixRedRed(newNode);
+		}
+	}
 
-    }
+	int size(Node *root)
+	{
+		return (root == NULL) ? 0 :
+			1 + size(root->left) + size(root->right);
+	}
+	int height(Node* root)
+	{
+		return (root == NULL) ? -1 :
+			1 + MAX(height(root->left), height(root->right));
+	}
+	int MAX(int x, int y)
+	{
+		if (x >= y)
+			return x;
+		else
+			return y;
+	}
+};
 
-    Node* BSTInsert(Node* root, Node* node)
-    {
-       
-        if (root == NULL)
-            return node;
-
-        if (node->val < root->val)
-        {
-            root->left = BSTInsert(root->left, node);
-            root->left->parent = root;
-        }
-        else if (node->val > root->val)
-        {
-            root->right = BSTInsert(root->right, node);
-            root->right->parent = root;
-        }
-
-       
-        return root;
-    }
-    Node* insert(Node*root,string data)
-    {
-        Node* node = new Node(data);
-        //Node* root=NULL;
-
-        
-        root = BSTInsert(root, node);
-
-         
-       return check (node,root);
-       
-    }
-
-    int MAX(int x, int y)
-    {
-        if (x >= y)
-            return x;
-        else
-            return y;
-    }
-    int height(Node* root)
-    {
-        return (root == NULL) ? -1 :
-            1 + MAX(height(root->left), height(root->right));
-    }
-    int size(Node* root)
-    {
-        return (root == NULL) ? 0 :
-            1 + size(root->left) + size(root->right);
-    }
-
-
-
-                
-
-
-
-int main()
-{
-   /* Node* root=new Node("h");
-    Node* right1 = new Node("d");
-    Node* right2 = new Node("c");
-    root->right = right1;
-    right1->right = right2;
-    Node* tree = root;
-    cout << tree->val << endl;
-    
-    leftRotate(root, tree);
-    cout << tree->left->val << endl;*/
-    
-   /* Node* x("alaa");
-    Node* y("moh");
-    Node* z("omar");
-    Node* m("Zaghloul");
-    Node* a("Abdo");
-    Node* root=NULL;*/
-   /* x.parent = &m;
-    m.parent = &x;
-    x.parent = &y;
-    m.right = &a;
-    //x.left = &z;*/
-    Node* root=NULL;
-    root = insert(root, "h");
-    root = insert(root, "d");
-    root = insert(root, "b");
-    //root = insert(root, "a");
-  //  root = insert(root, "m");
-    int x = size(root);
-    int y = height(root);
-    cout << x << endl;
-    cout << y << endl;
-
-
-
-        
-     //   insert("abdo");
-
-
-    
-    //insert("zaghloul");
-    cout << root->right->val << endl;
-    
-   
-
-
-
-    
-
-    
-    return 0; 
-
-
-
-
+int main() {
+	RBTree tree;
+	string word;
+	ifstream file("dictionary.txt");
+	if (file.is_open()) {
+		while (getline(file, word)) {
+			tree.insert(word);
+		}
+		file.close();
+	}
+	else
+		cout << "file not found" << endl;
+	string newWord;
+	cout << "insert a word: ";
+	cin >> newWord;
+	tree.insert(newWord);
+	cout << "Size: " << tree.size(tree.root) << endl;
+	cout << "Height: " << tree.height(tree.root) << endl;
+	
+	return 0;
 }
